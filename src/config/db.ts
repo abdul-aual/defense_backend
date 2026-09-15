@@ -221,27 +221,38 @@ const initDB = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS "Booking" (
         id SERIAL PRIMARY KEY,
-
+    
         customer_id INTEGER NOT NULL
           REFERENCES "Customer"(id),
-
+    
         vehicle_id INTEGER NOT NULL
           REFERENCES "Vehicle"(id),
-
+    
+        city VARCHAR(50) NOT NULL
+          CHECK (
+            city IN (
+              'Dhaka',
+              'Rangpur',
+              'Chattogram'
+            )
+          ),
+    
+        pickup_point TEXT NOT NULL,
+    
         start_date DATE NOT NULL,
-
+    
         end_date DATE NOT NULL
           CHECK (end_date >= start_date),
-
+    
         daily_rent_price NUMERIC(10,2) NOT NULL
           CHECK (daily_rent_price > 0),
-
+    
         total_rent NUMERIC(10,2) NOT NULL
           CHECK (total_rent > 0),
-
+    
         status booking_status NOT NULL
           DEFAULT 'Booked',
-
+    
         booked_by_type VARCHAR(10) NOT NULL
           CHECK (
             booked_by_type IN (
@@ -249,13 +260,13 @@ const initDB = async () => {
               'admin'
             )
           ),
-
+    
         booked_by_admin_id INTEGER
           REFERENCES "Admin"(id),
-
+    
         created_at TIMESTAMP NOT NULL
           DEFAULT CURRENT_TIMESTAMP,
-
+    
         CHECK (
           (
             booked_by_type = 'own'
@@ -269,6 +280,8 @@ const initDB = async () => {
         )
       );
     `);
+    
+    console.log("✅ Booking table ready!");
 
     console.log("✅ Booking table ready!");
 
