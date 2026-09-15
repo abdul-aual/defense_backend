@@ -13,10 +13,14 @@ export const pool = new Pool({
 
 const initDB = async () => {
   try {
-    // Check PostgreSQL connection
+    // =========================
+    // CHECK POSTGRESQL CONNECTION
+    // =========================
+
     await pool.query("SELECT 1");
 
     console.log("✅ PostgreSQL Connected Successfully!");
+
 
     // =========================
     // CREATE ALL ENUMS
@@ -38,6 +42,7 @@ const initDB = async () => {
           );
         END IF;
 
+
         -- Admin Status ENUM
         IF NOT EXISTS (
           SELECT 1
@@ -50,6 +55,7 @@ const initDB = async () => {
           );
         END IF;
 
+
         -- Vehicle Type ENUM
         IF NOT EXISTS (
           SELECT 1
@@ -59,10 +65,10 @@ const initDB = async () => {
           CREATE TYPE vehicle_type AS ENUM (
             'car',
             'SUV',
-            'motorcycle',
             'HiAce'
           );
         END IF;
+
 
         -- Vehicle Availability ENUM
         IF NOT EXISTS (
@@ -76,6 +82,7 @@ const initDB = async () => {
             'maintenance'
           );
         END IF;
+
 
         -- Booking Status ENUM
         IF NOT EXISTS (
@@ -93,6 +100,9 @@ const initDB = async () => {
       END
       $$;
     `);
+
+    console.log("✅ All ENUMs ready!");
+
 
     // =========================
     // CREATE ADMIN TABLE
@@ -121,6 +131,7 @@ const initDB = async () => {
 
     console.log("✅ Admin table ready!");
 
+
     // =========================
     // CREATE CUSTOMER TABLE
     // =========================
@@ -144,6 +155,7 @@ const initDB = async () => {
 
     console.log("✅ Customer table ready!");
 
+
     // =========================
     // CREATE VEHICLE TABLE
     // =========================
@@ -158,20 +170,49 @@ const initDB = async () => {
 
         registration_number VARCHAR(30) NOT NULL UNIQUE,
 
+        ac_type VARCHAR(20) NOT NULL
+          CHECK (ac_type IN ('AC', 'Non-AC')),
+
+        total_seats INTEGER NOT NULL
+          CHECK (total_seats > 0),
+
+        fuel_type VARCHAR(20) NOT NULL
+          CHECK (
+            fuel_type IN (
+              'Petrol',
+              'Diesel',
+              'CNG',
+              'Electric'
+            )
+          ),
+
+        suitcase_capacity INTEGER NOT NULL
+          CHECK (suitcase_capacity >= 0),
+
         daily_rent_price NUMERIC(10,2) NOT NULL
           CHECK (daily_rent_price > 0),
 
         city VARCHAR(50) NOT NULL
-          CHECK (city IN ('Dhaka', 'Rangpur', 'Chattogram')),
+          CHECK (
+            city IN (
+              'Dhaka',
+              'Rangpur',
+              'Chattogram'
+            )
+          ),
 
         availability_status vehicle_availability NOT NULL
           DEFAULT 'available',
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        image VARCHAR(255) NOT NULL,
+
+        created_at TIMESTAMP NOT NULL
+          DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
     console.log("✅ Vehicle table ready!");
+
 
     // =========================
     // CREATE BOOKING TABLE
@@ -202,17 +243,29 @@ const initDB = async () => {
           DEFAULT 'Booked',
 
         booked_by_type VARCHAR(10) NOT NULL
-          CHECK (booked_by_type IN ('own', 'admin')),
+          CHECK (
+            booked_by_type IN (
+              'own',
+              'admin'
+            )
+          ),
 
         booked_by_admin_id INTEGER
           REFERENCES "Admin"(id),
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP NOT NULL
+          DEFAULT CURRENT_TIMESTAMP,
 
         CHECK (
-          (booked_by_type = 'own' AND booked_by_admin_id IS NULL)
+          (
+            booked_by_type = 'own'
+            AND booked_by_admin_id IS NULL
+          )
           OR
-          (booked_by_type = 'admin' AND booked_by_admin_id IS NOT NULL)
+          (
+            booked_by_type = 'admin'
+            AND booked_by_admin_id IS NOT NULL
+          )
         )
       );
     `);

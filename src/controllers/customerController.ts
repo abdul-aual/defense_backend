@@ -498,8 +498,71 @@ export const customerLogin = async (
       });
     }
   };
+  
 
+  export const getAllCustomers = async (
+    req: AuthRequest,
+    res: Response
+  ): Promise<Response> => {
+    try {
+      const result = await pool.query(`
+        SELECT id, name, phone
+        FROM "Customer"
+        ORDER BY id ASC
+      `);
+  
+      return res.status(200).json({
+        message: "Customer list fetched successfully",
+        customers: result.rows,
+      });
+    } catch (error) {
+      console.error("Get All Customers Error:", error);
+  
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
+  };
 
+  export const getCustomerById = async (
+    req: AuthRequest,
+    res: Response
+  ): Promise<Response> => {
+    try {
+      const customerId = Number(req.params.id);
+  
+      if (!customerId || Number.isNaN(customerId)) {
+        return res.status(400).json({
+          message: "Invalid customer ID",
+        });
+      }
+  
+      const result = await pool.query(
+        `
+        SELECT id, name, email, phone, created_at
+        FROM "Customer"
+        WHERE id = $1
+        `,
+        [customerId]
+      );
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+  
+      return res.status(200).json({
+        customer: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Get Customer By ID Error:", error);
+  
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
+  };
 
 
 
