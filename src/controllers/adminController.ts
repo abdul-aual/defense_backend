@@ -113,15 +113,19 @@ export const getAdmins = async (
   try {
     const result = await pool.query(`
       SELECT
-        id,
-        name,
-        phone,
-        role,
-        status,
-        disabled_by,
-        disabled_at
-      FROM "Admin"
-      ORDER BY id ASC
+        a.id,
+        a.name,
+        a.phone,
+        a.role,
+        a.status,
+        a.disabled_by,
+        a.disabled_at,
+        d.name AS disabled_by_name
+      FROM "Admin" a
+      LEFT JOIN "Admin" d
+        ON a.disabled_by = d.id
+      WHERE a.role = 'admin'
+      ORDER BY a.id ASC
     `);
 
     return res.status(200).json({
