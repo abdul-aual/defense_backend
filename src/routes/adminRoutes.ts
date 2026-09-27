@@ -1,13 +1,17 @@
 import { Router } from "express";
+
 import {
   adminLogin,
   getAdmins,
   createAdmin,
   changePassword,
   updateOwnProfile,
-  toggleAdminStatus
+  toggleAdminStatus,
+  getDashboardStats
 } from "../controllers/adminController.js";
+
 import authMiddleware from "../middleware/authMiddleware.js";
+
 import requireSuperAdmin from "../middleware/roleMiddleware.js";
 
 const router = Router();
@@ -29,22 +33,29 @@ router.post(
 );
 
 router.patch(
-    "/change-password",
-    authMiddleware,
-    changePassword
-  );
+  "/change-password",
+  authMiddleware,
+  changePassword
+);
 
 router.patch(
-    "/profile",
-    authMiddleware,
-    updateOwnProfile
-  );
+  "/profile",
+  authMiddleware,
+  updateOwnProfile
+);
 
+router.patch(
+  "/:id/status",
+  authMiddleware,
+  requireSuperAdmin,
+  toggleAdminStatus
+);
 
-  router.patch(
-    "/:id/status",
-    authMiddleware,
-    requireSuperAdmin,
-    toggleAdminStatus
-  );
+// Dashboard Statistics
+router.get(
+  "/dashboard/stats",
+  authMiddleware,
+  getDashboardStats
+);
+
 export default router;

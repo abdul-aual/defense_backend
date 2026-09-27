@@ -477,3 +477,52 @@ export const toggleAdminStatus = async (
   }
 };
 
+export const getDashboardStats = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (
+          SELECT COUNT(*)
+          FROM "Vehicle"
+        ) AS total_vehicles,
+
+        (
+          SELECT COUNT(*)
+          FROM "Booking"
+          WHERE status = 'Booked'
+        ) AS active_bookings,
+
+        (
+          SELECT COUNT(*)
+          FROM "Customer"
+        ) AS total_customers,
+
+        (
+          SELECT COUNT(*)
+          FROM "Vehicle"
+          WHERE availability_status = 'available'
+        ) AS available_vehicles
+    `);
+
+    return res.status(200).json({
+      message: "Dashboard statistics fetched successfully",
+      stats: {
+        totalVehicles: Number(result.rows[0].total_vehicles),
+        activeBookings: Number(result.rows[0].active_bookings),
+        totalCustomers: Number(result.rows[0].total_customers),
+        availableVehicles: Number(
+          result.rows[0].available_vehicles
+        ),
+      },
+    });
+  } catch (error) {
+    console.error("Get Dashboard Stats Error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
