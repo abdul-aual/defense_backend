@@ -1,362 +1,952 @@
-# Rentwise – Web-Based Vehicle Rental Management System
+# Rentwise — Backend
 
-## 📌 Project Overview
+## Design and Implementation of a Web-Based Vehicle Rental Management System
 
-**Rentwise** is a web-based vehicle rental management system designed to make vehicle rental services easier, faster, and more organized.
+This repository contains the backend server of **Rentwise**, a web-based vehicle rental management system developed as a university defense project.
 
-The system allows customers to browse available vehicles, view rental information, and make bookings. Administrators can manage vehicles, manage users, and handle bookings through an administrative interface.
+The backend provides RESTful APIs for authentication, customer management, vehicle management, booking management, maintenance scheduling, administrator management, and vehicle availability synchronization.
 
-The project is developed as a **local web application** using a modern backend architecture with **Node.js, Express.js, TypeScript/JavaScript, and PostgreSQL**.
-
----
-
-## 🎯 Objectives
-
-The main objectives of Rentwise are:
-
-* To provide an easy-to-use vehicle rental platform.
-* To allow customers to view available vehicles.
-* To allow customers to make vehicle bookings.
-* To allow administrators to add and manage vehicles.
-* To manage vehicle availability automatically.
-* To provide secure user authentication.
-* To organize vehicle and booking information using a relational database.
-* To reduce manual work in vehicle rental management.
+The backend is built using **Node.js, Express, TypeScript, and PostgreSQL**.
 
 ---
 
-## ✨ Key Features
+# Project Overview
 
-### 👤 Customer Features
+Rentwise is designed to simplify vehicle rental operations by connecting customers and administrators through a centralized web-based system.
 
-* Customer registration and login
-* Secure password storage
-* Browse available vehicles
-* View vehicle details
-* View vehicle type and rental price
-* View vehicles according to city
-* Book a vehicle
-* Cancel bookings
-* View booking information
-* Vehicle availability updates automatically after booking
+The backend is responsible for:
 
-### 🛠️ Admin Features
-
-* Admin login
-* Add new vehicles
-* Update vehicle information
-* Delete or disable vehicles
-* Manage vehicle availability
-* View vehicle information
-* Create bookings on behalf of customers
-* Manage customer information
-* Manage booking-related information
-* Administrative access control
-
-### 🔐 Authentication & Security
-
-* Password hashing using **bcrypt**
-* Authentication using **JSON Web Token (JWT)**
-* Role-based access control
-* Protected administrative routes
-* Environment variables for database configuration
-* CORS configuration
+* User authentication
+* Customer management
+* Administrator management
+* Role-based authorization
+* Vehicle management
+* Vehicle availability
+* Maintenance scheduling
+* Booking creation
+* Booking cancellation
+* Booking completion
+* Booking history
+* Automatic booking completion
+* Vehicle status synchronization
 
 ---
 
-## 🚗 Vehicle Management
+# Technology Stack
 
-Each vehicle contains important information such as:
+| Technology | Purpose                    |
+| ---------- | -------------------------- |
+| Node.js    | Runtime environment        |
+| Express.js | Backend framework          |
+| TypeScript | Type-safe development      |
+| PostgreSQL | Relational database        |
+| pg         | PostgreSQL driver          |
+| JWT        | Authentication             |
+| bcrypt     | Password hashing           |
+| dotenv     | Environment configuration  |
+| cors       | Cross-origin communication |
+| tsx        | Development execution      |
 
-* Vehicle name
+---
+
+# System Architecture
+
+```text
+                ┌─────────────────────┐
+                │   React Frontend    │
+                │ React + TypeScript  │
+                └──────────┬──────────┘
+                           │
+                           │ REST API
+                           ▼
+                ┌─────────────────────┐
+                │   Express Backend   │
+                │  Node + TypeScript  │
+                └──────────┬──────────┘
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+             ▼                           ▼
+     ┌───────────────┐           ┌───────────────┐
+     │ Authentication│           │ Business Logic│
+     │ JWT + bcrypt  │           │ Booking etc.  │
+     └───────────────┘           └───────┬───────┘
+                                         │
+                                         ▼
+                                ┌─────────────────┐
+                                │   PostgreSQL    │
+                                │    Database     │
+                                └─────────────────┘
+```
+
+---
+
+# Core Modules
+
+## Authentication
+
+Rentwise uses:
+
+* JWT authentication
+* bcrypt password hashing
+* Protected API routes
+* Role-based authorization
+
+Authentication tokens are sent using:
+
+```text
+Authorization: Bearer <token>
+```
+
+---
+
+# User Roles
+
+The backend supports:
+
+### Customer
+
+Customers can:
+
+* Create an account
+* Log in
+* Search available vehicles
+* Create bookings
+* View their booking history
+* Cancel their own eligible bookings
+
+### Admin
+
+Administrators can:
+
+* Manage vehicles
+* Schedule maintenance
+* View customers
+* View bookings
+* Manage booking status
+* Perform administrative operations
+
+### Super Admin
+
+Super administrators have higher-level administrative privileges.
+
+They can manage administrators and perform privileged administrative operations.
+
+The system supports administrator disabling rather than permanently deleting an administrator.
+
+---
+
+# Database
+
+The project uses **PostgreSQL**.
+
+The main database used during development is:
+
+```text
+defense
+```
+
+The system includes core tables for:
+
+```text
+Admin
+Customer
+Vehicle
+Booking
+```
+
+The database also uses enum-based fields for controlled values such as:
+
+* Admin roles
+* Admin status
 * Vehicle type
-* Registration number
-* Daily rental price
+* Vehicle city
+* Vehicle availability status
+* Booking status
+
+---
+
+# Vehicle Model
+
+A vehicle contains information such as:
+
+```text
+id
+vehicle_name
+type
+registration_number
+ac_type
+total_seats
+fuel_type
+suitcase_capacity
+daily_rent_price
+city
+availability_status
+image
+created_at
+```
+
+---
+
+# Supported Vehicle Types
+
+```text
+car
+SUV
+HiAce
+```
+
+---
+
+# Supported Cities
+
+```text
+Dhaka
+Rangpur
+Chattogram
+```
+
+---
+
+# Vehicle Availability
+
+A vehicle can have availability states such as:
+
+```text
+available
+booked
+maintenance
+```
+
+The backend controls vehicle availability based on current bookings and maintenance schedules.
+
+---
+
+# Booking System
+
+Customers can create bookings by providing:
+
+```text
+vehicle_id
+city
+pickup_point
+start_date
+end_date
+```
+
+The authenticated customer is associated with the booking automatically.
+
+Administrators can also create bookings on behalf of customers using customer information.
+
+---
+
+# Booking Validation
+
+Before creating a booking, the backend validates:
+
+* Authentication
+* Required fields
+* Vehicle ID
+* Date format
+* Date range
 * City
-* Availability status
-* Vehicle image
+* Customer information
+* Vehicle existence
+* Vehicle maintenance status
+* Existing booking conflicts
 
-Supported vehicle categories include:
+Dates must use:
 
-* Car
-* Private Car
-* SUV
-* HiAce
-* Motorcycle
+```text
+YYYY-MM-DD
+```
 
-Vehicle rental prices can vary depending on the city.
+The end date cannot be earlier than the start date.
 
 ---
 
-## 📅 Booking System
+# Booking Overlap Prevention
 
-The booking system allows customers to reserve available vehicles.
+The backend prevents two active bookings from overlapping for the same vehicle.
 
-When a vehicle is successfully booked:
+The overlap condition is:
 
 ```text
-Vehicle Status
-      ↓
-Available
-      ↓
-Booking Created
-      ↓
+existing start_date <= new end_date
+AND
+existing end_date >= new start_date
+```
+
+Therefore, a vehicle cannot be booked by multiple customers for overlapping rental periods.
+
+---
+
+# Rental Calculation
+
+Rent is calculated using inclusive rental days.
+
+For example:
+
+```text
+Start Date = 20 December
+End Date   = 22 December
+
+Rental Days = 3
+```
+
+The total rental price is:
+
+```text
+Total Rent = Daily Rent × Rental Days
+```
+
+---
+
+# Booking Status
+
+The system supports booking statuses including:
+
+```text
 Booked
-```
-
-When a booking is cancelled or completed and there is no other active booking for that vehicle:
-
-```text
-Booked
-   ↓
-Booking Cancelled / Completed
-   ↓
-Available
-```
-
-This keeps the vehicle availability status synchronized with the booking system.
-
----
-
-## 🗄️ Database
-
-Rentwise uses **PostgreSQL** as its relational database management system.
-
-The database contains information related to:
-
-* Users
-* Vehicles
-* Bookings
-* Administrators
-* Super Administrators
-* Audit information
-
-The database is designed to maintain relationships between users, vehicles, and bookings.
-
----
-
-## 🧰 Technologies Used
-
-### Backend
-
-```text
-Node.js
-Express.js
-JavaScript / TypeScript
-```
-
-### Database
-
-```text
-PostgreSQL
-```
-
-### Authentication & Security
-
-```text
-bcrypt
-JSON Web Token (JWT)
-CORS
-dotenv
-```
-
-### Development Tools
-
-```text
-npm
-Nodemon
-VS Code
-pgAdmin
-Git
-GitHub
+Completed
+Cancelled
 ```
 
 ---
 
-## 📁 Project Structure
+# Vehicle and Booking Synchronization
+
+One of the important backend features is automatic synchronization between bookings and vehicle availability.
+
+When a booking is successfully created, the backend checks whether the booking is currently active.
+
+If the booking covers the current date:
+
+```text
+Vehicle → booked
+```
+
+If the booking is for a future date, the vehicle does not become currently booked simply because a future reservation exists.
+
+After cancellation or completion:
+
+```text
+Vehicle → available
+```
+
+unless another active booking or maintenance condition requires otherwise.
+
+---
+
+# Maintenance System
+
+Administrators can schedule vehicle maintenance.
+
+Maintenance is managed using:
+
+* Registration number
+* Start date/time
+* End date/time
+
+A vehicle under maintenance cannot be booked.
+
+Maintenance has priority over normal booking availability.
+
+The backend preserves:
+
+```text
+maintenance
+```
+
+instead of changing the vehicle back to `available` while the vehicle is still under maintenance.
+
+---
+
+# Automatic Booking Completion
+
+The backend checks expired bookings using Bangladesh local date/time.
+
+When an active booking's end date has passed:
+
+```text
+Booked → Completed
+```
+
+The corresponding vehicle availability is then synchronized.
+
+---
+
+# Bangladesh Timezone
+
+The booking logic uses Bangladesh local time:
+
+```text
+Asia/Dhaka
+```
+
+This is important for:
+
+* Current booking status
+* Booking completion
+* Vehicle availability
+* Date-based booking logic
+
+---
+
+# Customer Booking History
+
+Customers can retrieve their booking history through:
+
+```http
+GET /api/booking/my-bookings
+```
+
+The endpoint returns information including:
+
+* Booking ID
+* Vehicle name
+* Registration number
+* Vehicle type
+* City
+* Pickup point
+* Start date
+* End date
+* Daily rent
+* Total rent
+* Booking status
+* Booking type
+* Created date
+
+---
+
+# Booking Cancellation
+
+A customer can cancel their own active booking using:
+
+```http
+PATCH /api/booking/:id/cancel
+```
+
+Administrators can also cancel eligible bookings according to their privileges.
+
+After cancellation:
+
+```text
+Booking → Cancelled
+```
+
+and the vehicle availability is synchronized again.
+
+---
+
+# Booking Completion
+
+Administrators can complete a booking using:
+
+```http
+PATCH /api/booking/:id/complete
+```
+
+After completion, the backend updates the vehicle's current availability according to the remaining booking and maintenance conditions.
+
+---
+
+# Main API Endpoints
+
+## Booking
+
+### Create Booking
+
+```http
+POST /api/booking
+```
+
+Authentication:
+
+```text
+Required
+```
+
+---
+
+### Customer Booking History
+
+```http
+GET /api/booking/my-bookings
+```
+
+Authentication:
+
+```text
+Required
+```
+
+---
+
+### All Bookings
+
+```http
+GET /api/booking/
+```
+
+Authentication:
+
+```text
+Required
+```
+
+Authorization:
+
+```text
+Admin / Super Admin
+```
+
+---
+
+### Customer Bookings by Phone
+
+```http
+GET /api/booking/customer/:phone
+```
+
+Authentication:
+
+```text
+Required
+```
+
+Authorization:
+
+```text
+Admin / Super Admin
+```
+
+---
+
+### Cancel Booking
+
+```http
+PATCH /api/booking/:id/cancel
+```
+
+Authentication:
+
+```text
+Required
+```
+
+---
+
+### Complete Booking
+
+```http
+PATCH /api/booking/:id/complete
+```
+
+Authentication:
+
+```text
+Required
+```
+
+---
+
+# Vehicle API
+
+The backend provides vehicle APIs for:
+
+* Adding vehicles
+* Searching vehicles
+* Searching available vehicles
+* Vehicle information management
+* Maintenance scheduling
+* Vehicle availability management
+
+Important endpoints include:
+
+```http
+POST /api/vehicle
+```
+
+```http
+GET /api/vehicle/search
+```
+
+```http
+GET /api/vehicle/available
+```
+
+```http
+PATCH /api/vehicle/maintenance
+```
+
+---
+
+# Vehicle Availability Search
+
+The frontend can request available vehicles using:
+
+```http
+GET /api/vehicle/available
+```
+
+Supported query parameters include:
+
+```text
+start_date
+end_date
+type
+city
+```
+
+Example:
+
+```text
+/api/vehicle/available?start_date=2026-09-27&end_date=2026-09-30&type=SUV&city=Dhaka
+```
+
+The backend checks the selected rental period and returns vehicles that can be booked for that period.
+
+---
+
+# Vehicle Search for Maintenance
+
+Administrators can search for a vehicle using:
+
+```http
+GET /api/vehicle/search
+```
+
+Parameters include:
+
+```text
+registration_number
+date
+start_time
+end_time
+```
+
+This allows administrators to identify a specific vehicle before scheduling maintenance.
+
+---
+
+# Project Structure
 
 ```text
 backend/
 │
 ├── src/
 │   ├── config/
-│   │   └── db.js
+│   │   └── db.ts
 │   │
 │   ├── controllers/
-│   │
-│   ├── routes/
+│   │   ├── bookingController.ts
+│   │   ├── vehicleController.ts
+│   │   └── ...
 │   │
 │   ├── middleware/
+│   │   ├── authMiddleware.ts
+│   │   ├── requireAdmin.ts
+│   │   └── roleMiddleware.ts
 │   │
-│   └── server.js
-│
-├── uploads/
-│   └── vehicles/
+│   ├── routes/
+│   │   ├── bookingRoutes.ts
+│   │   ├── vehicleRoutes.ts
+│   │   └── ...
+│   │
+│   └── server.ts
 │
 ├── .env
-├── .gitignore
 ├── package.json
-├── package-lock.json
+├── tsconfig.json
 └── README.md
 ```
 
-> The exact folder structure may change as new features are added to the project.
-
 ---
 
-## ⚙️ Installation & Setup
+# Environment Variables
 
-### 1. Clone the Repository
+Create a `.env` file inside the backend directory.
 
-```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
-```
-
-### 2. Open the Project
-
-```bash
-cd backend
-```
-
-### 3. Install Dependencies
-
-```bash
-npm install
-```
-
-### 4. Configure Environment Variables
-
-Create a `.env` file in the project root:
+Example:
 
 ```env
+PORT=5000
+
 DB_USER=postgres
 DB_HOST=localhost
 DB_NAME=defense
-DB_PASSWORD=your_password
 DB_PORT=5432
+
+JWT_SECRET=your_secret_key
 ```
 
-Replace `your_password` with the PostgreSQL password configured on your computer.
+Do not commit the actual `.env` file to GitHub.
 
-### 5. Create the Database
+---
 
-Create a PostgreSQL database named:
+# Database Setup
+
+## 1. Install PostgreSQL
+
+Install PostgreSQL on the development machine.
+
+---
+
+## 2. Create Database
+
+Create a database named:
 
 ```text
 defense
 ```
 
-Then create the required tables using the project's SQL/database setup.
+---
 
-### 6. Start the Development Server
+## 3. Configure `.env`
+
+Set the PostgreSQL credentials:
+
+```env
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=defense
+DB_PORT=5432
+```
+
+Use the correct PostgreSQL username and password for the local machine.
+
+---
+
+# Installation
+
+Navigate to the backend directory:
+
+```bash
+cd backend
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+---
+
+# Development Server
+
+Run the backend in development mode:
 
 ```bash
 npm run dev
 ```
 
-The backend server will run locally.
-
----
-
-## 🔌 API Architecture
-
-The backend follows a RESTful API architecture.
-
-Example API endpoints:
+The backend server runs on:
 
 ```text
-POST   /api/auth/register
-POST   /api/auth/login
-
-GET    /api/vehicles
-POST   /api/vehicles
-PUT    /api/vehicles/:id
-DELETE /api/vehicles/:id
-
-GET    /api/bookings
-POST   /api/bookings
-PUT    /api/bookings/:id
-DELETE /api/bookings/:id
+http://localhost:5000
 ```
-
-> Endpoint names may be updated as the project development continues.
 
 ---
 
-## 🔄 System Workflow
+# Production Build
+
+Compile TypeScript:
+
+```bash
+npm run build
+```
+
+The compiled JavaScript files are generated in the configured build directory.
+
+Start the production server:
+
+```bash
+npm start
+```
+
+---
+
+# Security
+
+The backend implements several security mechanisms.
+
+### Password Hashing
+
+Customer and administrator passwords are protected using:
+
+```text
+bcrypt
+```
+
+Passwords are not stored as plain text.
+
+### JWT Authentication
+
+Authenticated requests use:
+
+```text
+Authorization: Bearer <token>
+```
+
+### Role-Based Authorization
+
+Administrative routes are protected using middleware that checks the authenticated user's role.
+
+---
+
+# Error Handling
+
+The backend validates requests before performing database operations.
+
+Common HTTP responses include:
+
+```text
+200 OK
+201 Created
+400 Bad Request
+401 Unauthorized
+403 Forbidden
+404 Not Found
+409 Conflict
+500 Internal Server Error
+```
+
+For example:
+
+* Invalid input → `400`
+* Missing authentication → `401`
+* Insufficient permissions → `403`
+* Vehicle not found → `404`
+* Booking conflict → `409`
+* Maintenance conflict → `409`
+
+---
+
+# CORS
+
+CORS is configured so that the React frontend can communicate with the Express backend during local development.
+
+Frontend:
+
+```text
+http://localhost:5173
+```
+
+Backend:
+
+```text
+http://localhost:5000
+```
+
+---
+
+# Running the Complete Project
+
+The Rentwise project requires both frontend and backend servers.
+
+## Terminal 1 — Backend
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Backend:
+
+```text
+http://localhost:5000
+```
+
+---
+
+## Terminal 2 — Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend:
+
+```text
+http://localhost:5173
+```
+
+---
+
+# Complete System Flow
 
 ```text
 Customer
    │
    ▼
-Registration / Login
+Search Vehicle
    │
    ▼
-Browse Vehicles
+Select Rental Dates
+   │
+   ▼
+View Available Vehicles
    │
    ▼
 Select Vehicle
    │
    ▼
-Create Booking
+Login / Create Account
    │
    ▼
-Vehicle Status → Booked
-```
-
-Administrative workflow:
-
-```text
-Admin Login
-     │
-     ▼
-Admin Dashboard
-     │
-     ├── Manage Vehicles
-     │
-     ├── Manage Customers
-     │
-     └── Manage Bookings
+Booking
+   │
+   ▼
+Backend Validation
+   │
+   ├── Vehicle Availability
+   ├── Maintenance Check
+   ├── Date Conflict Check
+   └── Customer Validation
+   │
+   ▼
+PostgreSQL
+   │
+   ▼
+Booking Created
+   │
+   ▼
+Vehicle Status Synchronized
 ```
 
 ---
 
-## 🖼️ Vehicle Images
+# Key Business Rules
 
-Vehicle images are uploaded through the administrative interface.
+The backend follows the following important business rules:
 
-The backend can store uploaded vehicle images in:
-
-```text
-uploads/vehicles/
-```
-
-The database stores the corresponding image path instead of storing the complete image as binary data.
-
----
-
-## 🔒 Environment & Git Security
-
-Sensitive environment variables are not included in the GitHub repository.
-
-The following files/folders should be ignored:
-
-```gitignore
-node_modules/
-.env
-*.log
-uploads/
-.vscode/
-.idea/
-```
-
-A `.env.example` file can be provided so that other team members know which environment variables are required.
+1. A vehicle cannot have overlapping active bookings.
+2. A vehicle under maintenance cannot be booked.
+3. Future bookings do not automatically make the vehicle currently `booked`.
+4. A currently active booking can make the vehicle `booked`.
+5. Cancelled bookings do not remain active.
+6. Completed bookings are no longer active.
+7. Vehicle availability is synchronized after booking changes.
+8. Rental days are calculated inclusively.
+9. Bangladesh local time is used for current booking status and automatic completion.
+10. Administrative operations require appropriate authorization.
+11. Customer booking history is accessible only to the authenticated customer.
+12. Vehicle registration numbers uniquely identify vehicles.
 
 ---
 
-## 👥 Development Team
+# Team
 
 ### Team 2
+
+**Project:** Rentwise
+
+**Title:** Design and Implementation of a Web-Based Vehicle Rental Management System
 
 | Name               | Student ID    |
 | ------------------ | ------------- |
@@ -367,35 +957,22 @@ A `.env.example` file can be provided so that other team members know which envi
 
 ---
 
-## 🎓 Project Type
+# Academic Project
 
-**Academic / University Defense Project**
+Rentwise was developed as a university defense project to demonstrate the practical implementation of:
 
-**Project Title:**
-**Design and Implementation of a Web-Based Vehicle Rental Management System**
-
-**Project Name:**
-**Rentwise**
-
----
-
-## 🚀 Future Improvements
-
-Possible future improvements include:
-
-* Online payment integration
-* Advanced booking history
-* Customer reviews and ratings
-* Vehicle search and filtering
-* Improved admin dashboard
-* Email/SMS booking notifications
-* Detailed reports and analytics
-* Advanced audit logging
-* Multiple-city expansion
-* Vehicle maintenance tracking
+* Web application development
+* REST API development
+* Database management
+* Authentication and authorization
+* Role-based access control
+* Vehicle rental management
+* Booking management
+* Business rule implementation
+* Frontend-backend integration
 
 ---
 
-## 📄 License
+## License
 
-This project is developed for academic and educational purposes.
+This project was developed for academic and educational purposes as part of a university defense project.
