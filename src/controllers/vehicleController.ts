@@ -188,3 +188,41 @@ export const getAvailableVehicles = async (
     });
   }
 };
+
+export const getAllVehicles = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        vehicle_name,
+        type,
+        registration_number,
+        ac_type,
+        total_seats,
+        fuel_type,
+        suitcase_capacity,
+        daily_rent_price,
+        city,
+        availability_status,
+        created_at
+      FROM "Vehicle"
+      ORDER BY id ASC
+      `
+    );
+
+    return res.status(200).json({
+      message: "All vehicles fetched successfully",
+      vehicles: result.rows,
+    });
+  } catch (error) {
+    console.error("Get All Vehicles Error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};

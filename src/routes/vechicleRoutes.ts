@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   getAvailableVehicles,
   createVehicle,
+  getAllVehicles,
 } from "../controllers/vehicleController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -17,6 +18,14 @@ const router = Router();
 router.get(
   "/available",
   getAvailableVehicles
+);
+
+// View all vehicles — both Super Admin and Normal Admin
+router.get(
+  "/",
+  authMiddleware,
+  requireAdmin,
+  getAllVehicles
 );
 
 router.post(
